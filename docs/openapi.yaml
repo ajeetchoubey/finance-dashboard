@@ -1,0 +1,222 @@
+openapi: 3.0.3
+info:
+  title: Finance Dashboard Backend API
+  version: 1.0.0
+  description: API contract for the finance dashboard backend.
+servers:
+  - url: /api/v1
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          nullable: true
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errorCode:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+            user:
+              $ref: '#/components/schemas/User'
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+    Record:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: number
+        type:
+          type: string
+          enum: [income, expense]
+        category:
+          type: string
+        note:
+          type: string
+          nullable: true
+        transactionDate:
+          type: string
+          format: date
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+  /auth/login:
+    post:
+      summary: Login and receive a JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+  /auth/me:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get the current user
+      responses:
+        '200':
+          description: Current user
+  /users:
+    get:
+      security:
+        - bearerAuth: []
+      summary: List users
+      responses:
+        '200':
+          description: Paginated user list
+    post:
+      security:
+        - bearerAuth: []
+      summary: Create user
+      responses:
+        '201':
+          description: Created
+  /records:
+    get:
+      security:
+        - bearerAuth: []
+      summary: List financial records
+      responses:
+        '200':
+          description: Paginated record list
+    post:
+      security:
+        - bearerAuth: []
+      summary: Create financial record
+      responses:
+        '201':
+          description: Created
+  /records/{id}:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get a financial record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Record details
+    patch:
+      security:
+        - bearerAuth: []
+      summary: Update a financial record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Updated
+    delete:
+      security:
+        - bearerAuth: []
+      summary: Soft delete a financial record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+  /dashboard/summary:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get total income, expenses, and net balance
+      responses:
+        '200':
+          description: Dashboard summary
+  /dashboard/category-totals:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get category-wise totals
+      responses:
+        '200':
+          description: Category totals
+  /dashboard/trends:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get weekly or monthly trend data
+      responses:
+        '200':
+          description: Trend data
+  /dashboard/recent-activity:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get recent activity
+      responses:
+        '200':
+          description: Recent records
