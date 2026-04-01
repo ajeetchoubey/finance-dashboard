@@ -1,0 +1,106 @@
+generator client {
+  provider              = "prisma-client"
+  output                = "../src/generated/prisma"
+  engineType            = "client"
+  runtime               = "nodejs"
+  moduleFormat = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoleName {
+  VIEWER
+  ANALYST
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        RoleName @unique
+  description String?
+  users       User[]
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("roles")
+}
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  roleId       String     @db.Uuid @map("role_id")
+  role         Role       @relation(fields: [roleId], references: [id])
+  status       UserStatus @default(ACTIVE)
+  lastLoginAt  DateTime?  @map("last_login_at") @db.Timestamptz(6)
+  createdAt    DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime   @updatedAt @db.Timestamptz(6)
+  createdRecords FinancialRecord[] @relation("RecordCreatedBy")
+  updatedRecords FinancialRecord[] @relation("RecordUpdatedBy")
+  auditLogs     AuditLog[] @relation("AuditActor")
+
+  @@map("users")
+}
+
+model Category {
+  id        String            @id @default(uuid()) @db.Uuid
+  name      String            @unique
+  createdAt DateTime          @default(now()) @db.Timestamptz(6)
+  records   FinancialRecord[]
+
+  @@map("categories")
+}
+
+model FinancialRecord {
+  id              String          @id @default(uuid()) @db.Uuid
+  amount          Decimal         @db.Decimal(14, 2)
+  type            TransactionType
+  categoryId      String          @db.Uuid @map("category_id")
+  category        Category        @relation(fields: [categoryId], references: [id])
+  note            String?
+  transactionDate DateTime        @db.Date @map("transaction_date")
+  createdById     String          @db.Uuid @map("created_by")
+  createdBy       User            @relation("RecordCreatedBy", fields: [createdById], references: [id])
+  updatedById     String          @db.Uuid @map("updated_by")
+  updatedBy       User            @relation("RecordUpdatedBy", fields: [updatedById], references: [id])
+  isDeleted       Boolean         @default(false) @map("is_deleted")
+  deletedAt       DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  createdAt       DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime        @updatedAt @db.Timestamptz(6)
+
+  @@index([transactionDate])
+  @@index([type])
+  @@index([categoryId])
+  @@index([isDeleted])
+  @@map("financial_records")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  actorUserId String   @db.Uuid @map("actor_user_id")
+  actor       User     @relation("AuditActor", fields: [actorUserId], references: [id])
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  beforeData  Json?    @map("before_data")
+  afterData   Json?    @map("after_data")
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
