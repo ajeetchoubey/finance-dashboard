@@ -110,9 +110,14 @@ export async function getRecentActivity(input: DashboardFilters & { limit: numbe
   return prisma.financialRecord.findMany({
     where: buildRecordWhere(input),
     take: input.limit,
-    orderBy: {
-      updatedAt: "desc"
-    },
+    orderBy: [
+      {
+        transactionDate: "desc"
+      },
+      {
+        updatedAt: "desc"
+      }
+    ],
     include: recentActivityInclude
   });
 }
