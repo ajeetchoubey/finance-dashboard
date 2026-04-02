@@ -127,6 +127,7 @@ export async function updateUser(input: {
   name?: string;
   roleId?: string;
   status?: UserStatusInput;
+  passwordHash?: string;
 }) {
   const data: Prisma.UserUpdateInput = {};
 
@@ -144,6 +145,10 @@ export async function updateUser(input: {
 
   if (input.status !== undefined) {
     data.status = toUserStatusEnum(input.status);
+  }
+
+  if (input.passwordHash !== undefined) {
+    data.passwordHash = input.passwordHash;
   }
 
   return prisma.user.update({

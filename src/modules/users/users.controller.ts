@@ -8,7 +8,7 @@ import { validateOrThrow } from "../../common/utils/validation.js";
 import * as usersService from "./users.service.js";
 
 const userIdParamsSchema = z.object({
-  id: z.string().uuid()
+  id: z.uuid()
 });
 
 const createUserSchema = z.object({
@@ -29,7 +29,8 @@ const updateUserSchema = z
   .object({
     name: z.string().trim().min(1).max(120).optional(),
     role: roleSchema.optional(),
-    status: userStatusSchema.optional()
+    status: userStatusSchema.optional(),
+    password: z.string().min(8).max(128).optional()
   })
   .refine((value) => Object.values(value).some((entry) => entry !== undefined), {
     message: "At least one field must be provided"
@@ -65,6 +66,7 @@ export async function updateUser(req: Request, res: Response) {
   const payload = validateOrThrow(updateUserSchema, req.body);
   const data = await usersService.updateUser({
     id: params.id,
+    actorId: req.user!.id,
     ...payload
   });
 
@@ -74,7 +76,7 @@ export async function updateUser(req: Request, res: Response) {
 export async function updateUserStatus(req: Request, res: Response) {
   const params = validateOrThrow(userIdParamsSchema, req.params);
   const payload = validateOrThrow(updateUserStatusSchema, req.body);
-  const data = await usersService.updateUserStatus(params.id, payload.status);
+  const data = await usersService.updateUserStatus(params.id, payload.status, req.user!.id);
 
   sendSuccess(res, data, "User status updated successfully");
 }

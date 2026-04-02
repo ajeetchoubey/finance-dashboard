@@ -29,9 +29,11 @@ type ListUsersInput = {
 
 type UpdateUserInput = {
   id: string;
+  actorId: string;
   name?: string;
   role?: RoleInput;
   status?: UserStatusInput;
+  password?: string;
 };
 
 function serializeUser(user: {
@@ -120,19 +122,30 @@ export async function getUserById(id: string) {
 
 export async function updateUser(input: UpdateUserInput) {
   await getUserOrThrow(input.id);
+
+  if (input.status === "inactive" && input.id === input.actorId) {
+    throw new AppError(400, "You cannot deactivate your own account", "CANNOT_DEACTIVATE_SELF");
+  }
+
   const roleId = input.role ? await getRoleIdOrThrow(input.role) : undefined;
+  const passwordHash = input.password ? await bcrypt.hash(input.password, 10) : undefined;
   const updatedUser = await usersRepository.updateUser({
     id: input.id,
     name: input.name?.trim(),
     roleId,
-    status: input.status
+    status: input.status,
+    passwordHash
   });
 
   return serializeUser(updatedUser);
 }
 
-export async function updateUserStatus(id: string, status: UserStatusInput) {
+export async function updateUserStatus(id: string, status: UserStatusInput, actorId: string) {
   await getUserOrThrow(id);
+
+  if (status === "inactive" && id === actorId) {
+    throw new AppError(400, "You cannot deactivate your own account", "CANNOT_DEACTIVATE_SELF");
+  }
 
   const updatedUser = await usersRepository.updateUserStatus(id, status);
 
