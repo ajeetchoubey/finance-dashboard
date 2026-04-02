@@ -9,7 +9,7 @@ type DashboardFilters = {
 };
 
 type TrendInput = DashboardFilters & {
-  period: "weekly" | "monthly";
+  period: "daily" | "weekly" | "monthly";
 };
 
 function startOfWeekUtc(value: Date) {
@@ -105,10 +105,23 @@ export async function getTrends(input: TrendInput) {
 
   for (const record of records) {
     const start =
-      input.period === "weekly"
-        ? startOfWeekUtc(record.transactionDate)
-        : startOfMonthUtc(record.transactionDate);
-    const end = input.period === "weekly" ? endOfWeekUtc(start) : endOfMonthUtc(start);
+      input.period === "daily"
+        ? new Date(
+            Date.UTC(
+              record.transactionDate.getUTCFullYear(),
+              record.transactionDate.getUTCMonth(),
+              record.transactionDate.getUTCDate()
+            )
+          )
+        : input.period === "weekly"
+          ? startOfWeekUtc(record.transactionDate)
+          : startOfMonthUtc(record.transactionDate);
+    const end =
+      input.period === "daily"
+        ? start
+        : input.period === "weekly"
+          ? endOfWeekUtc(start)
+          : endOfMonthUtc(start);
     const key = formatDateOnly(start);
     const existing = grouped.get(key) ?? {
       period: input.period,

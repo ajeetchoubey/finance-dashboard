@@ -16,7 +16,7 @@ const summaryQuerySchema = z.object({
 });
 
 const trendQuerySchema = summaryQuerySchema.extend({
-  period: z.enum(["weekly", "monthly"]).default("monthly")
+  period: z.enum(["daily", "weekly", "monthly"]).default("monthly")
 });
 
 const recentActivityQuerySchema = z.object({
