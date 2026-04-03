@@ -73,4 +73,74 @@ A backend for a finance dashboard system where different users interact with fin
 
 ## Deployment
 
-The backend is deployed on [Render](https://render.com) with a [Neon](https://neon.tech) PostgreSQL database. The frontend is deployed on [Netlify](https://netlify.com).
+- **Backend**: Render (free tier) — https://finance-dashboard-9spq.onrender.com
+- **Database**: Neon (free tier, serverless PostgreSQL)
+- **Frontend**: Netlify (free tier) — https://financedashboardnew.netlify.app
+
+### Prerequisites
+
+- A [GitHub](https://github.com) account with both repos pushed
+- A [Neon](https://neon.tech) account for the database
+- A [Render](https://render.com) account for the backend
+- A [Netlify](https://netlify.com) account for the frontend
+
+### Step 1 — Database (Neon)
+
+1. Create a free project on Neon and select the region closest to your backend.
+2. From the **Connection Details** panel, copy two connection strings:
+   - **Pooled** (has `-pooler` in the host) → used as `DATABASE_URL` at runtime
+   - **Direct** (no `-pooler`) → used as `DIRECT_URL` for migrations
+
+### Step 2 — Backend (Render)
+
+1. Create a new **Web Service** on Render and connect the backend GitHub repo.
+2. Leave **Root Directory** empty. Render auto-detects `render.yaml` with the correct settings:
+   - **Build**: `npm ci --include=dev && npm run prisma:generate && npm run build`
+   - **Start**: `npm run migrate:deploy && npm start`
+3. Set these environment variables in the Render dashboard:
+
+   | Variable | Value |
+   |---|---|
+   | `NODE_ENV` | `production` |
+   | `DATABASE_URL` | Neon pooled connection string |
+   | `DIRECT_URL` | Neon direct connection string |
+   | `JWT_SECRET` | Use the **Generate** button in Render |
+   | `JWT_EXPIRES_IN` | `1d` |
+   | `CORS_ORIGIN` | Your Netlify frontend URL |
+
+4. Deploy. Prisma migrations run automatically on every start before traffic is served.
+5. To seed demo data, point your local `.env` at the Neon `DATABASE_URL` and run `npm run db:seed` locally.
+
+> **Note:** The free Render plan spins down after 15 minutes of inactivity. The first request after inactivity may take 30–50 seconds.
+
+### Step 3 — Frontend (Netlify)
+
+1. Create a new site on Netlify and connect the frontend GitHub repo.
+2. Leave **Base directory** empty. Netlify auto-detects `netlify.toml`:
+   - **Build**: `npm ci && npm run build`
+   - **Publish**: `dist`
+3. Set this environment variable in the Netlify dashboard:
+
+   | Variable | Value |
+   |---|---|
+   | `VITE_API_URL` | Your Render backend URL + `/api/v1` |
+
+4. Deploy. The `netlify.toml` includes a catch-all redirect so all client-side routes work correctly.
+5. After deploying, update `CORS_ORIGIN` on Render to your Netlify URL and redeploy.
+
+### Demo Accounts
+
+All accounts use password `Password@123`.
+
+| Email | Role | Access |
+|---|---|---|
+| `admin@example.com` | Admin | Full access |
+| `analyst@example.com` | Analyst | Dashboard + read records |
+| `viewer@example.com` | Viewer | Dashboard only |
+
+## Assumptions
+
+- Authentication is required before accessing protected endpoints.
+- Roles determine what each user can read or modify.
+- Financial records support filtering, aggregation, and soft delete.
+- PostgreSQL is the source of truth for all persisted data.
