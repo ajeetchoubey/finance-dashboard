@@ -12,6 +12,7 @@ import { usersRouter } from "./modules/users/users.routes.js";
 import { authenticateRequest } from "./common/middleware/auth.js";
 import { errorHandler } from "./common/middleware/error-handler.js";
 import { notFoundHandler } from "./common/middleware/not-found.js";
+import { authRateLimiter, globalRateLimiter } from "./common/middleware/rate-limit.js";
 
 export function createApp() {
   const app = express();
@@ -20,6 +21,7 @@ export function createApp() {
   app.use(cors());
   app.use(express.json());
   app.use(morgan("dev"));
+  app.use(globalRateLimiter);
 
   app.get("/", (_req, res) => {
     res.json({
@@ -33,7 +35,7 @@ export function createApp() {
   });
 
   app.use("/api/v1/health", healthRouter);
-  app.use("/api/v1/auth", authRouter);
+  app.use("/api/v1/auth", authRateLimiter, authRouter);
 
   app.use(authenticateRequest);
   app.use("/api/v1/users", usersRouter);
