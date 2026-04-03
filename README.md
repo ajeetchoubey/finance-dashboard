@@ -55,13 +55,8 @@ A backend for a finance dashboard system where different users interact with fin
 
 ## Documentation
 
-- [High-Level Design](docs/hld.md)
-- [Database Design](docs/db-schema.md)
-- [API Specification](docs/api-spec.md)
-- [Implementation Plan](docs/implementation-plan.md)
+- [API Docs (Swagger UI)](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/ajeetchoubey/finance-dashboard/master/docs/openapi.yaml)
 - [OpenAPI Spec](docs/openapi.yaml)
-- [Seed Data](docs/seed-data.md)
-- [Setup Guide](docs/setup.md)
 - [Postman Collection](docs/postman-collection.json)
 
 ## Standout Additions
