@@ -6,4 +6,6 @@ coverage
 *.log
 /src/generated/prisma
 docs
+!docs/openapi.yaml
+!docs/postman-collection.json
 assignment.txt
