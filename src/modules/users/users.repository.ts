@@ -1,5 +1,6 @@
 import { Prisma } from "../../generated/prisma/client.js";
 
+import type { DbClient } from "../../common/audit/audit.shared.js";
 import { prisma } from "../../config/prisma.js";
 import {
   toRoleEnum,
@@ -49,8 +50,8 @@ function buildUserWhere(filters: Omit<UserFilters, "page" | "limit">): Prisma.Us
   return where;
 }
 
-export async function findUserByEmail(email: string) {
-  return prisma.user.findFirst({
+export async function findUserByEmail(email: string, db: DbClient = prisma) {
+  return db.user.findFirst({
     where: {
       email: {
         equals: email,
@@ -60,8 +61,8 @@ export async function findUserByEmail(email: string) {
   });
 }
 
-export async function findUserById(id: string) {
-  return prisma.user.findUnique({
+export async function findUserById(id: string, db: DbClient = prisma) {
+  return db.user.findUnique({
     where: { id },
     include: {
       role: true
@@ -69,8 +70,8 @@ export async function findUserById(id: string) {
   });
 }
 
-export async function findRoleByName(role: RoleInput) {
-  return prisma.role.findUnique({
+export async function findRoleByName(role: RoleInput, db: DbClient = prisma) {
+  return db.role.findUnique({
     where: {
       name: toRoleEnum(role)
     }
@@ -83,8 +84,8 @@ export async function createUser(input: {
   passwordHash: string;
   roleId: string;
   status: UserStatusInput;
-}) {
-  return prisma.user.create({
+}, db: DbClient = prisma) {
+  return db.user.create({
     data: {
       name: input.name,
       email: input.email,
@@ -128,7 +129,7 @@ export async function updateUser(input: {
   roleId?: string;
   status?: UserStatusInput;
   passwordHash?: string;
-}) {
+}, db: DbClient = prisma) {
   const data: Prisma.UserUpdateInput = {};
 
   if (input.name !== undefined) {
@@ -151,7 +152,7 @@ export async function updateUser(input: {
     data.passwordHash = input.passwordHash;
   }
 
-  return prisma.user.update({
+  return db.user.update({
     where: { id: input.id },
     data,
     include: {
@@ -160,8 +161,8 @@ export async function updateUser(input: {
   });
 }
 
-export async function updateUserStatus(id: string, status: UserStatusInput) {
-  return prisma.user.update({
+export async function updateUserStatus(id: string, status: UserStatusInput, db: DbClient = prisma) {
+  return db.user.update({
     where: { id },
     data: {
       status: toUserStatusEnum(status)

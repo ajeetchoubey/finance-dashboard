@@ -1,5 +1,6 @@
 import { Prisma } from "../../generated/prisma/client.js";
 
+import type { DbClient } from "../../common/audit/audit.shared.js";
 import { prisma } from "../../config/prisma.js";
 import {
   toTransactionTypeEnum,
@@ -121,16 +122,16 @@ function buildRecordWhere(filters: RecordFilters): Prisma.FinancialRecordWhereIn
   return where;
 }
 
-async function upsertCategory(name: string) {
-  return prisma.category.upsert({
+async function upsertCategory(name: string, db: DbClient = prisma) {
+  return db.category.upsert({
     where: { name: name.trim() },
     update: {},
     create: { name: name.trim() }
   });
 }
 
-export async function findRecordById(id: string) {
-  return prisma.financialRecord.findFirst({
+export async function findRecordById(id: string, db: DbClient = prisma) {
+  return db.financialRecord.findFirst({
     where: {
       id,
       isDeleted: false
@@ -162,10 +163,10 @@ export async function findRecords(input: ListRecordsInput) {
   };
 }
 
-export async function createRecord(input: CreateRecordInput) {
-  const category = await upsertCategory(input.category);
+export async function createRecord(input: CreateRecordInput, db: DbClient = prisma) {
+  const category = await upsertCategory(input.category, db);
 
-  return prisma.financialRecord.create({
+  return db.financialRecord.create({
     data: {
       amount: new Prisma.Decimal(input.amount),
       type: toTransactionTypeEnum(input.type),
@@ -179,7 +180,7 @@ export async function createRecord(input: CreateRecordInput) {
   });
 }
 
-export async function updateRecord(input: UpdateRecordInput) {
+export async function updateRecord(input: UpdateRecordInput, db: DbClient = prisma) {
   const data: Prisma.FinancialRecordUpdateInput = {
     updatedBy: {
       connect: {
@@ -197,7 +198,7 @@ export async function updateRecord(input: UpdateRecordInput) {
   }
 
   if (input.category !== undefined) {
-    const category = await upsertCategory(input.category);
+    const category = await upsertCategory(input.category, db);
 
     data.category = {
       connect: {
@@ -214,15 +215,15 @@ export async function updateRecord(input: UpdateRecordInput) {
     data.transactionDate = parseDateString(input.transactionDate);
   }
 
-  return prisma.financialRecord.update({
+  return db.financialRecord.update({
     where: { id: input.id },
     data,
     include: recordInclude
   });
 }
 
-export async function softDeleteRecord(id: string, updatedById: string) {
-  return prisma.financialRecord.update({
+export async function softDeleteRecord(id: string, updatedById: string, db: DbClient = prisma) {
+  return db.financialRecord.update({
     where: { id },
     data: {
       isDeleted: true,

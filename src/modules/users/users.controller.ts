@@ -42,7 +42,10 @@ const updateUserStatusSchema = z.object({
 
 export async function createUser(req: Request, res: Response) {
   const payload = validateOrThrow(createUserSchema, req.body);
-  const data = await usersService.createUser(payload);
+  const data = await usersService.createUser({
+    actorId: req.user!.id,
+    ...payload
+  });
 
   sendSuccess(res, data, "User created successfully", 201);
 }
