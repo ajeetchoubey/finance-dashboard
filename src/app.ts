@@ -13,12 +13,13 @@ import { authenticateRequest } from "./common/middleware/auth.js";
 import { errorHandler } from "./common/middleware/error-handler.js";
 import { notFoundHandler } from "./common/middleware/not-found.js";
 import { authRateLimiter, globalRateLimiter } from "./common/middleware/rate-limit.js";
+import { env } from "./config/env.js";
 
 export function createApp() {
   const app = express();
 
   app.use(helmet());
-  app.use(cors());
+  app.use(cors({ origin: env.CORS_ORIGIN === "*" ? true : env.CORS_ORIGIN.split(",").map((o) => o.trim()) }));
   app.use(express.json());
   app.use(morgan("dev"));
   app.use(globalRateLimiter);
